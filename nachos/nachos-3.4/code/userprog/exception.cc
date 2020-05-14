@@ -100,6 +100,21 @@ ExceptionHandler(ExceptionType which)
                         interrupt->Halt();
                         break;
                   case SC_ReadInt:
+                        DEBUG('a', "Read integer number from console.\n");
+                        int num = 0;
+                        int digit = 0;
+                        int i = 0;
+
+                        char* buffer = new char[INT_MAX_LENGTH];
+                        digit = gSynchConsole->Read(buffer, INT_MAX_LENGTH);
+                        i = buffer[0] == '-' ? 1:0;
+                        for(; i < digit; i++){
+                              num = num*10 + (int)(buffer[i] & MASK_GET_NUM);
+                        }
+                        num = buffer[0] == '-' ? -1*num : num;
+                        machine->WriteRegister(2, num);
+                        delete buffer;
+                        
                         Inc_Program_Counter();
                         break;
                   case SC_PrintInt:
