@@ -146,6 +146,23 @@ class Machine {
     void Debugger();		// invoke the user program debugger
     void DumpState();		// print the user CPU and memory state 
 
+	char* User2System(int virtAddr, int limit);
+	/* 
+		Input: - User space address (int) 
+ 			   - Limit of buffer (int) 
+		Output:- Buffer (char*) 
+		Purpose: Copy buffer from User memory space to System memory space 
+	*/
+
+	int System2User(int virtAddr, int len, char* buffer);
+	/* 
+		Input: - User space address (int) 
+			   - Limit of buffer (int) 
+			   - Buffer (char[]) 
+		Output:- Number of bytes copied (int) 
+		Purpose: Copy buffer from System memory space to User memory space 
+	*/ 
+
 
 // Data structures -- all of these are accessible to Nachos kernel code.
 // "public" for convenience.
