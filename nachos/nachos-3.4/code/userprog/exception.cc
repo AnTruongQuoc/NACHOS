@@ -48,11 +48,81 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+void Inc_Program_Counter(){
+      machine->Registers[PrevPCReg] = machine->Registers[PCReg];
+	machine->Registers[PCReg] = machine->Registers[NextPCReg];
+	machine->Registers[NextPCReg] += 4;
+}
+
 void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
 
+    switch(which){
+        case NoException:
+            printf("Everything OK");
+            interrupt->Halt();
+            break;           
+		
+		case PageFaultException:   
+            printf("No valid translation found");
+            interrupt->Halt();
+            break; 
+		case ReadOnlyException:    
+            printf("Write attempted to page marked read-only");
+            interrupt->Halt();
+            break; 
+		case BusErrorException:    
+            printf("Translation resulted in an invalid physical address");
+            interrupt->Halt();
+            break; 
+		case AddressErrorException: 
+            printf("Unaligned reference or one that was beyond the end of the address space");
+            interrupt->Halt();
+            break; 
+		case OverflowException:     
+            printf("Integer overflow in add or sub.");
+            interrupt->Halt();
+            break; 
+		case IllegalInstrException: 
+            printf(" Unimplemented or reserved instr.");
+            interrupt->Halt();
+            break; 
+		case NumExceptionTypes:
+            break;
+
+        case SyscallException:     
+            printf("A program executed a system call.");
+            switch(type){
+                  case SC_Halt:
+                        DEBUG('a', "Shutdown, initiated by user program. \n");
+                        interrupt->Halt();
+                        break;
+                  case SC_ReadInt:
+                        Inc_Program_Counter();
+                        break;
+                  case SC_PrintInt:
+                        Inc_Program_Counter();
+                        break;
+                  case SC_ReadChar:
+                        Inc_Program_Counter();
+                        break;
+                  case Sc_PrintChar:
+                        Inc_Program_Counter();
+                        break;
+                  case SC_ReadString:
+                        Inc_Program_Counter();
+                        break;
+                  case SC_PrintString:
+                        Inc_Program_Counter();
+                        break;     
+            }
+            break; 
+
+    }
+
+    /* OLD CODE EXAMPLE
     if ((which == SyscallException) && (type == SC_Halt)) {
 	DEBUG('a', "Shutdown, initiated by user program.\n");
    	interrupt->Halt();
@@ -60,4 +130,5 @@ ExceptionHandler(ExceptionType which)
 	printf("Unexpected user mode exception %d %d\n", which, type);
 	ASSERT(FALSE);
     }
+    */
 }
