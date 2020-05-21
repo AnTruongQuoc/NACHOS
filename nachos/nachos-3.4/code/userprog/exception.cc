@@ -104,20 +104,91 @@ ExceptionHandler(ExceptionType which)
                         int num = 0;
                         int digit = 0;
                         int i = 0;
+                        bool isNum = true;
 
                         char* buffer = new char[INT_MAX_LENGTH];
                         digit = gSynchConsole->Read(buffer, INT_MAX_LENGTH);
-                        i = buffer[0] == '-' ? 1:0;
+                        
+                        //Empty number
+                        if (digit < 1){
+                              machine->WriteRegister(2, 0);
+                              isNum = false;
+                              break;
+                        }
+                        //i = buffer[0] == '-' ? 1:0;
+                        //Check first digit is '-' ?
+                        if (buffer[0] == '-'){
+                              //Check case: User only type '-' character
+                              if (digit == 1){
+                                    machine->WriteRegister(2, 0);
+                                    isNum = false;
+                                    break;
+                              }
+                              i = 1;
+                        }
+                        else if (buffer[0] >= '0' && buffer[0] <= '9'){ //Case: positive number
+                              i = 0;
+                        }
+                        else {      //Case: It is not a number
+                              machine->WriteRegister(2, 0);
+                              isNum = false;
+                              break;
+                        }
+                        
+                        //Check another digit isNumber ?
+                        for (int k = 1; k < digit; k++){
+                              if (buffer[k] < '0' || buffer[k] > '9'){
+                                    machine->WriteRegister(2, 0);
+                                    isNum = false;
+                                    break;
+                              }
+                        }
+
+                        //Convert string into INT
                         for(; i < digit; i++){
                               num = num*10 + (int)(buffer[i] & MASK_GET_NUM);
                         }
                         num = buffer[0] == '-' ? -1*num : num;
-                        machine->WriteRegister(2, num);
+
+                        if (isNum){
+                              machine->WriteRegister(2, num);
+                        }
+                       
                         delete buffer;
                         
                         Inc_Program_Counter();
                         break;
                   case SC_PrintInt:
+                        //Put number into reg(4)
+                        int num = 0, len = 0, k = 0;
+                        num = machine->ReadRegister(4);
+                        
+                        if (num < 0){
+                              char c = '-';
+                              gSynchConsole->Write(&c, 1);
+                              num = num * -1;
+                        }
+
+                        if (num = 0){
+                              char c = '0';
+                              gSynchConsole->Write(&c, 1);
+                              break;
+                        }
+                        
+                        char* s = new char[INT_MAX_LENGTH]
+                        if (num > 0){
+                              s[len++] = num % 10 + '0';
+                              num /= 10;
+                        }
+                        
+                        //Reverse string above
+                        char tmp = '0';
+                        for (int i = 0; i < len/2; i++){
+                              tmp = s[i];
+                              s[i] = s[len - i -1];
+                              s[len -i - 1] = tmp;
+                        }
+
                         Inc_Program_Counter();
                         break;
                   case SC_ReadChar:
