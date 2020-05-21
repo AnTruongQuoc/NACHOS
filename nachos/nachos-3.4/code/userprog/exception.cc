@@ -48,6 +48,51 @@
 //	are in machine.h.
 //----------------------------------------------------------------------
 
+//----------------------------------------------------------------------
+// Machine::User2System
+//----------------------------------------------------------------------
+char* User2System(int virtAddr, int limit){
+	int i;// index 
+	int oneChar; 
+	char* kernelBuf = NULL; 
+	kernelBuf = new char[limit +1];//need for terminal string 
+	if (kernelBuf == NULL) 
+		return kernelBuf;
+
+	memset(kernelBuf, 0, limit+1); 
+	//printf("\n Filename u2s:");
+
+	for (i = 0 ; i < limit ; i++) 
+	{ 
+		machine->ReadMem(virtAddr+i, 1, &oneChar); 
+		kernelBuf[i] = (char)oneChar; 
+		//printf("%c",kernelBuf[i]); 
+		if (oneChar == 0) 
+			break; 
+	} 
+	return kernelBuf;
+}
+
+//----------------------------------------------------------------------
+// Machine::System2User
+//----------------------------------------------------------------------
+int System2User(int virtAddr,int len,char* buffer) { 
+	if (len < 0) return -1; 
+	if (len == 0)return len;
+
+	int i = 0; 
+	int oneChar = 0;
+
+	do{ 
+		oneChar= (int) buffer[i]; 
+		machine->WriteMem(virtAddr+i, 1, oneChar); 
+		i ++; 
+	} while(i < len && oneChar != 0);
+
+	return i; 
+}
+
+//---------------------------------------------------------------------
 void Inc_Program_Counter(){
       machine->Registers[PrevPCReg] = machine->Registers[PCReg];
 	machine->Registers[PCReg] = machine->Registers[NextPCReg];
@@ -103,11 +148,11 @@ ExceptionHandler(ExceptionType which)
                         DEBUG('a', "Read integer number from console.\n");
                         int num = 0;
                         int digit = 0;
-                        int i = 0;
+                        int i = 0, MAX_BUF = 255;
                         bool isNum = true;
 
-                        char* buffer = new char[INT_MAX_LENGTH];
-                        digit = gSynchConsole->Read(buffer, INT_MAX_LENGTH);
+                        char* buffer = new char[MAX_BUF];
+                        digit = gSynchConsole->Read(buffer, MAX_BUF);
                         
                         //Empty number
                         if (digit < 1){
@@ -137,7 +182,17 @@ ExceptionHandler(ExceptionType which)
                         
                         //Check another digit isNumber ?
                         for (int k = 1; k < digit; k++){
-                              if (buffer[k] < '0' || buffer[k] > '9'){
+                              if (buffer[k] == '.'){ //CASE IF USER TYPE 99.000
+                                    int j = k + 1;
+                                    for(;j < digit; j++){
+                                          if (buffer[j] != '0'){
+                                                DEBUG('a', "\nWARNING! This is not a integer number");
+                                                machine->WriteRegister(2, 0);
+                                                isNum = false;
+                                          }
+                                    }
+                              }
+                              else if (buffer[k] < '0' || buffer[k] > '9'){
                                     machine->WriteRegister(2, 0);
                                     isNum = false;
                                     break;
@@ -146,7 +201,7 @@ ExceptionHandler(ExceptionType which)
 
                         //Convert string into INT
                         for(; i < digit; i++){
-                              num = num*10 + (int)(buffer[i] & MASK_GET_NUM);
+                              num = num*10 + (int)(buffer[i] - 48);
                         }
                         num = buffer[0] == '-' ? -1*num : num;
 
@@ -175,7 +230,7 @@ ExceptionHandler(ExceptionType which)
                               break;
                         }
                         
-                        char* s = new char[INT_MAX_LENGTH]
+                        char* s = new char[MAX_INT_LENGTH]
                         if (num > 0){
                               s[len++] = num % 10 + '0';
                               num /= 10;
@@ -188,19 +243,63 @@ ExceptionHandler(ExceptionType which)
                               s[i] = s[len - i -1];
                               s[len -i - 1] = tmp;
                         }
+                        
+                        gSynchConsole->Write(s, len);
 
+                        delete s;
                         Inc_Program_Counter();
                         break;
                   case SC_ReadChar:
+                        int size = 255;
+                        char* buffer = new char[255];
+                       
+                        int num = gSynchConsole->Read(buffer, size);
+
+                        if(num > 1){ //more than 1 character
+                              DEBUG('a', "\nWARNING: Only 1 character accepted !!!");
+                              machine->WriteRegister(2,0);
+                        }
+                        else if(num == 0){
+                              DEBUG('a', "\nWARNING: Empty character");
+                              machine->WriteRegister(2, 0);
+                        }
+                        else { //Only 1 character in string buffer
+                              char c = buffer[0];
+                              machine->WriteRegister(2, c);
+                        }
                         Inc_Program_Counter();
                         break;
                   case Sc_PrintChar:
+                        char c;
+                        c = (char) machine->ReadRegister(4);
+                        gSynchConsole->Write(&c, 1);
+
                         Inc_Program_Counter();
                         break;
                   case SC_ReadString:
+                        char* buffer;
+                        int virtAddr, len;
+
+                        virtAddr = machine->ReadRegister(4);
+                        len = machine->ReadRegister(5);
+                        buffer = User2System(virtAddr, len);
+                        gSynchConsole->Read(buffer, len);
+                        System2User(virtAddr, len, buffer);
+
+                        delete buffer;
+
                         Inc_Program_Counter();
                         break;
                   case SC_PrintString:
+                        char* buffer;
+                        int virtAddr = machine->ReadRegister(4);
+                        buffer = User2System(virtAddr, 255);
+                        int len = 0;
+
+                        while(buffer[len] != NULL) len++;
+                        gSynchConsole->Write(buffer, len + 1);
+                        delete buffer;
+
                         Inc_Program_Counter();
                         break;     
             }
