@@ -303,8 +303,15 @@ ExceptionHandler(ExceptionType which)
                   case SC_PrintString:{
 			DEBUG('a', "Kiem traaaaaa");
 			printf("Vo ham nay chua ????");
-                       	interrupt->Halt();
+                       	char* buffer = new char[255];
+                        int virtAddr = machine->ReadRegister(4);
+                        buffer = User2System(virtAddr, 255);
+                        int len = 0;
 
+                        while(buffer[len] != 0 && buffer[len] != '\n') len++;
+                        gSynchConsole->Write(buffer, len);
+                        delete[] buffer;
+			
                         Inc_Program_Counter();
                         break;
 		  }   

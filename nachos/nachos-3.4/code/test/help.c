@@ -13,5 +13,5 @@ main(){
     //PrintString("ASCII: Program to show the ASCII Table\n");
     //PrintString("BubbleSort: Program using BubbleSort algorithm to sort an array under 100 elements\n");
 	
-	Exit(0);
+	return 0;
 }
