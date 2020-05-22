@@ -94,9 +94,11 @@ int System2User(int virtAddr,int len,char* buffer) {
 
 //---------------------------------------------------------------------
 void Inc_Program_Counter(){
-      machine->Registers[PrevPCReg] = machine->Registers[PCReg];
-	machine->Registers[PCReg] = machine->Registers[NextPCReg];
-	machine->Registers[NextPCReg] += 4;
+      int counter = machine->ReadRegister(PCReg);
+   	machine->WriteRegister(PrevPCReg, counter);
+    	counter = machine->ReadRegister(NextPCReg);
+    	machine->WriteRegister(PCReg, counter);
+   	machine->WriteRegister(NextPCReg, counter + 4);
 }
 
 void
@@ -141,11 +143,13 @@ ExceptionHandler(ExceptionType which)
             printf("A program executed a system call.");
             switch(type){
                   case SC_Halt:
-                        DEBUG('a', "Shutdown, initiated by user program. \n");
+                        DEBUG('a', "Shutdown, initiated by user program \n");
+			printf("Shutdown, initiated by user program \n");
                         interrupt->Halt();
                         break;
-                  case SC_ReadInt:
+                  case SC_ReadInt:{
                         DEBUG('a', "Read integer number from console.\n");
+			printf("Read integer number from console.\n");
                         int num = 0;
                         int digit = 0;
                         int i = 0, MAX_BUF = 255;
@@ -213,9 +217,12 @@ ExceptionHandler(ExceptionType which)
                         
                         Inc_Program_Counter();
                         break;
-                  case SC_PrintInt:
+		  }
+                  case SC_PrintInt:{
                         //Put number into reg(4)
-                        int num = 0, len = 0, k = 0;
+                        int num = 0;
+			int len = 0;
+			int k = 0;
                         num = machine->ReadRegister(4);
                         
                         if (num < 0){
@@ -230,8 +237,8 @@ ExceptionHandler(ExceptionType which)
                               break;
                         }
                         
-                        char* s = new char[MAX_INT_LENGTH]
-                        if (num > 0){
+                        char* s = new char[256];
+                        while (num > 0){
                               s[len++] = num % 10 + '0';
                               num /= 10;
                         }
@@ -249,7 +256,8 @@ ExceptionHandler(ExceptionType which)
                         delete s;
                         Inc_Program_Counter();
                         break;
-                  case SC_ReadChar:
+		  }
+                  case SC_ReadChar:{
                         int size = 255;
                         char* buffer = new char[255];
                        
@@ -269,14 +277,16 @@ ExceptionHandler(ExceptionType which)
                         }
                         Inc_Program_Counter();
                         break;
-                  case Sc_PrintChar:
+		  }
+                  case SC_PrintChar:{
                         char c;
                         c = (char) machine->ReadRegister(4);
                         gSynchConsole->Write(&c, 1);
 
                         Inc_Program_Counter();
                         break;
-                  case SC_ReadString:
+		  }
+                  case SC_ReadString:{
                         char* buffer;
                         int virtAddr, len;
 
@@ -290,18 +300,20 @@ ExceptionHandler(ExceptionType which)
 
                         Inc_Program_Counter();
                         break;
-                  case SC_PrintString:
+		  }
+                  case SC_PrintString:{
                         char* buffer;
                         int virtAddr = machine->ReadRegister(4);
                         buffer = User2System(virtAddr, 255);
                         int len = 0;
 
-                        while(buffer[len] != NULL) len++;
+                        while(buffer[len] != 0) len++;
                         gSynchConsole->Write(buffer, len + 1);
                         delete buffer;
 
                         Inc_Program_Counter();
-                        break;     
+                        break;
+		  }   
             }
             break; 
 
