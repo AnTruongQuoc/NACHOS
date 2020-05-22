@@ -138,7 +138,7 @@ ExceptionHandler(ExceptionType which)
             break;
 
         case SyscallException:     
-            printf("A program executed a system call.");
+            //printf("A program executed a system call.");
             switch(type){
                   case SC_Halt:
                         DEBUG('a', "Shutdown, initiated by user program \n");
@@ -147,14 +147,15 @@ ExceptionHandler(ExceptionType which)
                         break;
                   case SC_ReadInt:
 		  {
-                        DEBUG('a', "Read integer number from console.\n");
-			printf("Read integer number from console.\n");
+                        //DEBUG('a', "Read integer number from console.\n");
+			//printf("Read integer number from console: ");
                         int num = 0;
                         int digit = 0;
                         int i = 0, MAX_BUF = 255;
                         bool isNum = true;
-
-                        char* buffer = new char[MAX_BUF];
+			
+                        char* buffer = new char[MAX_BUF + 1];
+		
                         digit = gSynchConsole->Read(buffer, MAX_BUF);
                         
                         //Empty number
@@ -190,10 +191,17 @@ ExceptionHandler(ExceptionType which)
                                     for(;j < digit; j++){
                                           if (buffer[j] != '0'){
                                                 DEBUG('a', "\nWARNING! This is not a integer number");
+						printf("\nWARNING! This is not a integer number");
                                                 machine->WriteRegister(2, 0);
-                                                isNum = false;
+                                                //isNum = false;
+						Inc_Program_Counter();
+						delete[] buffer;
+						return;
                                           }
                                     }
+				    digit = k;
+				    break;
+				    
                               }
                               else if (buffer[k] < '0' || buffer[k] > '9'){
                                     machine->WriteRegister(2, 0);
@@ -201,7 +209,7 @@ ExceptionHandler(ExceptionType which)
                                     break;
                               }
                         }
-
+			
                         //Convert string into INT
                         for(; i < digit; i++){
                               num = num*10 + (int)(buffer[i] - 48);
@@ -212,50 +220,54 @@ ExceptionHandler(ExceptionType which)
                               machine->WriteRegister(2, num);
                         }
                        
-                        delete buffer;
+                        delete[] buffer;
                         
                         Inc_Program_Counter();
-                        break;
+			
+			return;	                        
+			//break;
 		  }
                   case SC_PrintInt:
 		  {
                         //Put number into reg(4)
                         int num = 0;
 			int len = 0;
-			int k = 0;
+			int k = 0, index = 0;
                         num = machine->ReadRegister(4);
                         
                         if (num < 0){
                               char c = '-';
                               gSynchConsole->Write(&c, 1);
                               num = num * -1;
+			      index = 1;
                         }
 
-                        if (num = 0){
+                        if (num == 0){
                               char c = '0';
                               gSynchConsole->Write(&c, 1);
                               break;
                         }
                         
+                        
+			int tmp = num;                        
+			while (tmp > 0){
+                              //s[len++] = (char)((num % 10) + '0');
+                              len++;
+			      tmp /= 10;
+                        }
                         char* s = new char[256];
-                        while (num > 0){
-                              s[len++] = num % 10 + '0';
-                              num /= 10;
-                        }
-                        
-                        //Reverse string above
-                        char tmp = '0';
-                        for (int i = 0; i < len/2; i++){
-                              tmp = s[i];
-                              s[i] = s[len - i -1];
-                              s[len -i - 1] = tmp;
-                        }
-                        
+			for(int i = len - 1; i >= 0; i--){
+				s[i] = 	(char)((num % 10) + '0');
+				num /= 10;		
+			}
+
+                        s[len] = 0;
                         gSynchConsole->Write(s, len);
 
-                        delete s;
+                        delete[] s;
                         Inc_Program_Counter();
-                        break;
+                        return;
+			//break;
 		  }
                   case SC_ReadChar:{
                         int size = 255;
@@ -283,7 +295,7 @@ ExceptionHandler(ExceptionType which)
                         c = (char) machine->ReadRegister(4);
                         gSynchConsole->Write(&c, 1);
 
-                        Inc_Program_Counter();
+                        //Inc_Program_Counter();
                         break;
 		  }
                   case SC_ReadString:{
@@ -302,27 +314,27 @@ ExceptionHandler(ExceptionType which)
                         break;
 		  }
                   case SC_PrintString:{
-			printf("Vo ham nay chua ????");
 			int LIMIT = 255;
                        	char* buffer;
                         int virtAddr = machine->ReadRegister(4);
                         buffer = User2System(virtAddr, LIMIT);
                         int len = 0;
-			printf("Still alive ?????");
-                        while(buffer[len] != 0) {
-				//gSynchConsole->Write(buffer+len, 1);
+			
+                        while(buffer[len] != 0 && buffer[len] != '\n') {
+				gSynchConsole->Write(buffer+len, 1);
 				len++;
 			}
-			printf("dead");
-			//buffer[len] = '\n';
-                        gSynchConsole->Write(buffer, len + 1);
+			
+			buffer[len] = '\n';
+                        gSynchConsole->Write(buffer + len, 1);
                         delete[] buffer;
 			
                         //Inc_Program_Counter();
                         break;
-		  } 
+		  }
+		  default: break; 
             }
-	    interrupt->Halt();
+	    Inc_Program_Counter();
             break; 
 
     }
