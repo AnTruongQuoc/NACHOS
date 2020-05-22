@@ -94,11 +94,9 @@ int System2User(int virtAddr,int len,char* buffer) {
 
 //---------------------------------------------------------------------
 void Inc_Program_Counter(){
-      int counter = machine->ReadRegister(PCReg);
-   	machine->WriteRegister(PrevPCReg, counter);
-    	counter = machine->ReadRegister(NextPCReg);
-    	machine->WriteRegister(PCReg, counter);
-   	machine->WriteRegister(NextPCReg, counter + 4);
+    machine->registers[PrevPCReg] = machine->registers[PCReg];	// for debugging					
+    machine->registers[PCReg] = machine->registers[NextPCReg];
+    machine->registers[NextPCReg] += 4;
 }
 
 void
@@ -147,7 +145,8 @@ ExceptionHandler(ExceptionType which)
 			printf("Shutdown, initiated by user program \n");
                         interrupt->Halt();
                         break;
-                  case SC_ReadInt:{
+                  case SC_ReadInt:
+		  {
                         DEBUG('a', "Read integer number from console.\n");
 			printf("Read integer number from console.\n");
                         int num = 0;
@@ -296,20 +295,15 @@ ExceptionHandler(ExceptionType which)
                         gSynchConsole->Read(buffer, len);
                         System2User(virtAddr, len, buffer);
 
-                        delete buffer;
+                        delete[] buffer;
 
                         Inc_Program_Counter();
                         break;
 		  }
                   case SC_PrintString:{
-                        char* buffer;
-                        int virtAddr = machine->ReadRegister(4);
-                        buffer = User2System(virtAddr, 255);
-                        int len = 0;
-
-                        while(buffer[len] != 0) len++;
-                        gSynchConsole->Write(buffer, len + 1);
-                        delete buffer;
+			DEBUG('a', "Kiem traaaaaa");
+			printf("Vo ham nay chua ????");
+                       	interrupt->Halt();
 
                         Inc_Program_Counter();
                         break;

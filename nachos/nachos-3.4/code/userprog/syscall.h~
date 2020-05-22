@@ -140,9 +140,9 @@ char ReadChar();
 
 void PrintChar(char character);\
 
-void ReadString(char[] buffer, int length);
+void ReadString(char buffer[], int length);
 
-void PrintString(char[] buffer);
+void PrintString(char buffer[]);
 
 #endif /* IN_ASM */
 

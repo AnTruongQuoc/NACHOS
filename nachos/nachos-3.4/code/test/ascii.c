@@ -7,9 +7,9 @@
 #include "copyright.h"
 
 int main(){
-
+    int i = 32;
     PrintString("ASCII Table from 32 to 126\n");
-    for (int i = 32; i < 127; i++){
+    for (; i < 127; i++){
         PrintInt(i);
         PrintChar(':');
         PrintChar((char)i);

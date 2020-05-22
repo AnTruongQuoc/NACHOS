@@ -15,6 +15,7 @@
 int
 main()
 {
+	PrintString("Hello");
     Halt();
     /* not reached */
 }

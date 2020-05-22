@@ -138,7 +138,7 @@ void PrintInt(int number);
 
 char ReadChar();
 
-void PrintChar(char character);\
+void PrintChar(char character);
 
 void ReadString(char buffer[], int length);
 
