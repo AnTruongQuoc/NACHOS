@@ -74,7 +74,7 @@ int SynchConsole::Write(char *from, int numBytes)
 
 	WLineBlock->P();			// Block for the line
 
-	//printf("[%s]:\n",currentThread->getName());	//DEBUG: Print thread
+	printf("inside synch\n");	//DEBUG: Print thread
 
 	for (loop = 0; loop < numBytes; loop++)
 	{

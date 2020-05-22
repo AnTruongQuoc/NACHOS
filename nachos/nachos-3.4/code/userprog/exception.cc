@@ -217,7 +217,8 @@ ExceptionHandler(ExceptionType which)
                         Inc_Program_Counter();
                         break;
 		  }
-                  case SC_PrintInt:{
+                  case SC_PrintInt:
+		  {
                         //Put number into reg(4)
                         int num = 0;
 			int len = 0;
@@ -301,21 +302,27 @@ ExceptionHandler(ExceptionType which)
                         break;
 		  }
                   case SC_PrintString:{
-			DEBUG('a', "Kiem traaaaaa");
-			printf("Vo ham nay chua ????");
-                       	char* buffer = new char[255];
+			//printf("Vo ham nay chua ????");
+			int LIMIT = 255;
+                       	char* buffer;
                         int virtAddr = machine->ReadRegister(4);
-                        buffer = User2System(virtAddr, 255);
+                        buffer = User2System(virtAddr, LIMIT);
                         int len = 0;
-
-                        while(buffer[len] != 0 && buffer[len] != '\n') len++;
-                        gSynchConsole->Write(buffer, len);
+			//printf("Still alive ?????");
+                        while(buffer[len] != 0) {
+				//gSynchConsole->Write(buffer+len, 1);
+				len++;
+			}
+			//printf("dead");
+			//buffer[len] = '\n';
+                        gSynchConsole->Write(buffer, len + 1);
                         delete[] buffer;
 			
                         Inc_Program_Counter();
                         break;
-		  }   
+		  } 
             }
+	    interrupt->Halt();
             break; 
 
     }
